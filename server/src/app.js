@@ -1,17 +1,17 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
-// Middleware
-app.use(cors());              // allow the React frontend to call this API
-app.use(express.json());      // parse incoming JSON request bodies
+// CORS must allow credentials so the cookie is sent from the frontend
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
 
-// Health-check route
-app.get("/", (req, res) => {
-  res.send("Reservation Portal API is running ✅");
-});
+app.get("/", (req, res) => res.send("Reservation Portal API is running ✅"));
 
-// (Feature routes will be mounted here later, e.g. app.use("/api/auth", authRoutes))
+app.use("/api/auth", authRoutes);
 
 export default app;

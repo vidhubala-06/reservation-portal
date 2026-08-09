@@ -226,3 +226,45 @@ CREATE TABLE stripe_webhook_events (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   processed_at TIMESTAMP NULL
 );
+
+CREATE TABLE refresh_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE turf_applications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  existing_user_id INT,                    -- set if an existing customer applies; NULL for a new person
+  applicant_name VARCHAR(100) NOT NULL,
+  applicant_email VARCHAR(150) NOT NULL,
+  applicant_phone VARCHAR(15),
+  pan_number VARCHAR(10),
+  business_name VARCHAR(150),
+  business_address VARCHAR(255),
+  turf_name VARCHAR(150) NOT NULL,
+  sport_category_id INT,
+  size ENUM('5v5','7v7','11v11'),
+  surface_type VARCHAR(50),
+  location_address VARCHAR(255),
+  latitude DECIMAL(9,6),
+  longitude DECIMAL(9,6),
+  price_per_hour INT,
+  opening_time TIME,
+  closing_time TIME,
+  slot_duration INT DEFAULT 60,
+  max_booking_duration INT DEFAULT 3,
+  amenities JSON,                          -- promoted to turf_amenities on approval
+  photos JSON,                             -- promoted to turf_images on approval
+  rules TEXT,
+  email_verified BOOLEAN DEFAULT FALSE,
+  status ENUM('pending','needs_correction','rejected','approved') DEFAULT 'pending',
+  rejection_reason TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (existing_user_id) REFERENCES users(id),
+  FOREIGN KEY (sport_category_id) REFERENCES sport_categories(id)
+);
