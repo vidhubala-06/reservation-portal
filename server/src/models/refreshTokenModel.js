@@ -1,7 +1,7 @@
-import pool from "../config/db.js";
 import crypto from "crypto";
+import pool from "../config/db.js";
 
-// Hash the token before storing/looking up (never store raw tokens)
+// Store/lookup only the hash — never the raw token
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 

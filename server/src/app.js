@@ -1,12 +1,15 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
+
+dotenv.config();
 
 const app = express();
 
-// CORS must allow credentials so the cookie is sent from the frontend
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// credentials:true is required so the browser sends/receives the httpOnly cookies
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

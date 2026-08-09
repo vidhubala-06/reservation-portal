@@ -12,28 +12,30 @@ import {
 } from "../utils/generateTokens.js";
 
 const cookieBase = {
-  httpOnly: true,                                 // JS can never read the tokens
-  secure: process.env.NODE_ENV === "production",  // HTTPS only in production
+  httpOnly: true,                                 // JS can never read the tokens (XSS-safe)
+  secure: process.env.NODE_ENV === "production",  // HTTPS-only in production
   sameSite: "strict",                             // mitigates CSRF
 };
 
-// Set BOTH tokens as httpOnly cookies
+const ACCESS_MAX_AGE = 15 * 60 * 1000;            // 15 minutes
+const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;  // 7 days
+
+// Put both tokens into httpOnly cookies
 const setAuthCookies = (res, accessToken, refreshToken) => {
-  res.cookie("accessToken", accessToken, { ...cookieBase, maxAge: 15 * 60 * 1000 });        // 15 min
-  res.cookie("refreshToken", refreshToken, { ...cookieBase, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
+  res.cookie("accessToken", accessToken, { ...cookieBase, maxAge: ACCESS_MAX_AGE });
+  res.cookie("refreshToken", refreshToken, { ...cookieBase, maxAge: REFRESH_MAX_AGE });
 };
 
 // Generate both tokens, store refresh hash in DB, set both cookies
 const issueAuthTokens = async (res, user) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  await saveRefreshToken(user.id, refreshToken, expiresAt);
+  await saveRefreshToken(user.id, refreshToken, new Date(Date.now() + REFRESH_MAX_AGE));
   setAuthCookies(res, accessToken, refreshToken);
 };
 
-// Shared registration logic — role is fixed by the caller, NOT the request body
-const registerUser = async (req, res, role) => {
+// POST /api/auth/signup  → customer account (role fixed server-side)
+export const signup = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
     if (!name || !email || !password)
@@ -43,26 +45,19 @@ const registerUser = async (req, res, role) => {
       return res.status(409).json({ message: "Email already registered" });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const userId = await createUser({ name, email, phone, passwordHash, role });
+    const userId = await createUser({ name, email, phone, passwordHash, role: "customer" });
 
-    const user = { id: userId, role };
-    await issueAuthTokens(res, user);
+    await issueAuthTokens(res, { id: userId, role: "customer" });
     res.status(201).json({
       message: "Account created",
-      user: { id: userId, name, email, role },
+      user: { id: userId, name, email, role: "customer" },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// POST /api/auth/signup        → customer (from the Sign Up page)
-export const signup = (req, res) => registerUser(req, res, "customer");
-
-// POST /api/auth/register-owner → owner (from the "List your turf" page)
-export const registerOwner = (req, res) => registerUser(req, res, "owner");
-
-// POST /api/auth/login  (role is read from DB, never collected)
+// POST /api/auth/login  → everyone; role read from DB
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -87,7 +82,7 @@ export const login = async (req, res) => {
   }
 };
 
-// POST /api/auth/refresh  (reads refresh cookie, sets a fresh access cookie)
+// POST /api/auth/refresh  → new access token from the refresh cookie
 export const refresh = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
@@ -101,14 +96,14 @@ export const refresh = async (req, res) => {
     if (!user) return res.status(403).json({ message: "User not found" });
 
     const accessToken = generateAccessToken(user);
-    res.cookie("accessToken", accessToken, { ...cookieBase, maxAge: 15 * 60 * 1000 });
+    res.cookie("accessToken", accessToken, { ...cookieBase, maxAge: ACCESS_MAX_AGE });
     res.json({ message: "Token refreshed" });
   } catch (err) {
     res.status(403).json({ message: "Invalid or expired refresh token" });
   }
 };
 
-// POST /api/auth/logout  (revoke refresh token + clear both cookies)
+// POST /api/auth/logout  → revoke refresh token + clear cookies
 export const logout = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;

@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// A connection pool reuses connections efficiently for concurrent requests
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
