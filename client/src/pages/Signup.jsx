@@ -15,24 +15,33 @@ function Signup() {
     setError("");
     try {
       await signup(form);
-      navigate("/"); // customer → home
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed");
     }
   };
 
+  const inputClass =
+    "w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500";
+
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto" }}>
-      <h2>Sign Up</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required /><br /><br />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required /><br /><br />
-        <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} /><br /><br />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required /><br /><br />
-        <button type="submit">Create account</button>
-      </form>
-      <p>Already have an account? <Link to="/login">Login</Link></p>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
+        <h2 className="mb-6 text-center text-2xl font-bold text-gray-900">Create your account</h2>
+        {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input name="name" placeholder="Full name" value={form.name} onChange={handleChange} required className={inputClass} />
+          <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className={inputClass} />
+          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} className={inputClass} />
+          <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className={inputClass} />
+          <button type="submit" className="w-full rounded-lg bg-green-600 py-2 font-medium text-white hover:bg-green-700">
+            Create account
+          </button>
+        </form>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Already have an account? <Link to="/login" className="font-medium text-green-600 hover:underline">Login</Link>
+        </p>
+      </div>
     </div>
   );
 }
