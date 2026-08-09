@@ -115,3 +115,8 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// GET /api/auth/me  → the currently logged-in user
+export const getMe = async (req, res) => {
+  res.json({ user: req.user });
+};
