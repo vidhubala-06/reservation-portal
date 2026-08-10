@@ -6,6 +6,7 @@ import OwnerDashboard from "./pages/OwnerDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Turfs from "./pages/Turfs.jsx";
+import TurfDetail from "./pages/TurfDetail.jsx";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path="/turfs" element={<Turfs />} />
+      <Route path="/turfs/:id" element={<TurfDetail />} />
     </Routes>
   );
 }
