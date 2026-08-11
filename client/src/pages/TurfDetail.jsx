@@ -35,6 +35,26 @@ function TurfDetail() {
 
         {turf && (
           <div className="rounded-xl bg-white p-6 shadow-sm">
+            {/* Image gallery */}
+            {turf.images?.length > 0 ? (
+              <div className="mb-6">
+                <img src={turf.images[0].image_key} alt={turf.name}
+                  className="h-64 w-full rounded-lg object-cover" />
+                {turf.images.length > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {turf.images.slice(1).map((img) => (
+                      <img key={img.id} src={img.image_key} alt={turf.name}
+                        className="h-20 w-20 rounded object-cover" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-6 flex h-64 items-center justify-center rounded-lg bg-gray-200 text-gray-400">
+                No image
+              </div>
+            )}
+
             <h2 className="text-2xl font-bold text-gray-900">{turf.name}</h2>
             <p className="mt-1 text-gray-500">{turf.location_address}</p>
 
@@ -70,18 +90,11 @@ function TurfDetail() {
 
             {hasLocation && (
               <div className="mt-6">
-                <h3 className="mb-2 font-semibold text-gray-900">
-                  Location
-                </h3>
-
+                <h3 className="mb-2 font-semibold text-gray-900">Location</h3>
                 <MapView position={position} />
-
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${turf.latitude},${turf.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-block rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-                >
+                <a href={`https://www.google.com/maps/dir/?api=1&destination=${turf.latitude},${turf.longitude}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="mt-3 inline-block rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
                   Get Directions
                 </a>
               </div>
