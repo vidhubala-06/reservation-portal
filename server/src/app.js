@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import turfRoutes from "./routes/turfRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";
+import metaRoutes from "./routes/metaRoutes.js";
 
 dotenv.config();
 
@@ -17,5 +19,7 @@ app.get("/", (req, res) => res.send("Reservation Portal API is running ✅"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/turfs", turfRoutes);
+app.use("/api/applications", applicationRoutes);
+app.use("/api/meta", metaRoutes);
 
 export default app;

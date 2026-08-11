@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname; // where they came from (e.g. /post-turf)
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -15,7 +18,8 @@ function Login() {
     setError("");
     try {
       const user = await login(form);
-      if (user.role === "admin") navigate("/admin");
+      if (from) navigate(from, { replace: true });          // return to the form
+      else if (user.role === "admin") navigate("/admin");
       else if (user.role === "owner") navigate("/owner");
       else navigate("/");
     } catch (err) {
@@ -34,12 +38,13 @@ function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className={inputClass} />
           <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className={inputClass} />
-          <button type="submit" className="w-full rounded-lg bg-green-600 py-2 font-medium text-white hover:bg-green-700">
-            Login
-          </button>
+          <button type="submit" className="w-full rounded-lg bg-green-600 py-2 font-medium text-white hover:bg-green-700">Login</button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
-          New here? <Link to="/signup" className="font-medium text-green-600 hover:underline">Sign up</Link>
+          New here?{" "}
+          <Link to="/signup" state={{ from: location.state?.from }} className="font-medium text-green-600 hover:underline">
+            Sign up
+          </Link>
         </p>
       </div>
     </div>

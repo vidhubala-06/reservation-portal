@@ -4,9 +4,10 @@ import pool from "../config/db.js";
 export const getApprovedTurfs = async () => {
   const [rows] = await pool.query(
     `SELECT t.id, t.name, t.location_address, t.price_per_hour, t.size, t.surface_type,
-            sc.name AS sport,
-            (SELECT image_key FROM turf_images
-             WHERE turf_id = t.id AND is_primary = TRUE LIMIT 1) AS primary_image
+      t.latitude, t.longitude,
+      sc.name AS sport,
+      (SELECT image_key FROM turf_images
+       WHERE turf_id = t.id AND is_primary = TRUE LIMIT 1) AS primary_image
      FROM turfs t
      LEFT JOIN sport_categories sc ON t.sport_category_id = sc.id
      WHERE t.status = 'approved'

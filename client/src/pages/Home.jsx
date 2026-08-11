@@ -48,6 +48,14 @@ function Home() {
           {turfs.map((turf) => <TurfCard key={turf.id} turf={turf} />)}
         </div>
       </section>
+      <div className="border-t border-gray-200 bg-white py-8 text-center">
+        <p className="text-gray-600">
+          Own a turf?{" "}
+          <Link to="/post-turf" className="font-medium text-green-600 hover:underline">
+            List it on Reservation Portal →
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Turfs from "./pages/Turfs.jsx";
 import TurfDetail from "./pages/TurfDetail.jsx";
+import PostTurf from "./pages/PostTurf.jsx";
 
 function App() {
   return (
@@ -28,6 +29,11 @@ function App() {
       } />
       <Route path="/turfs" element={<Turfs />} />
       <Route path="/turfs/:id" element={<TurfDetail />} />
+      <Route path="/post-turf" element={
+        <ProtectedRoute>
+        <PostTurf />
+      </ProtectedRoute>
+     } />
     </Routes>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar.jsx";
+import MapView from "../components/MapView.jsx";
 
 function TurfDetail() {
   const { id } = useParams();
@@ -22,6 +23,9 @@ function TurfDetail() {
     })();
   }, [id]);
 
+  const hasLocation = turf && turf.latitude && turf.longitude;
+  const position = hasLocation ? [parseFloat(turf.latitude), parseFloat(turf.longitude)] : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -37,7 +41,7 @@ function TurfDetail() {
             <div className="mt-4 flex flex-wrap gap-3 text-sm">
               <span className="rounded-full bg-green-100 px-3 py-1 font-medium text-green-700">{turf.sport}</span>
               <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{turf.size}</span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{turf.surface_type}</span>
+              {turf.surface_type && <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{turf.surface_type}</span>}
             </div>
 
             {turf.description && <p className="mt-4 text-gray-700">{turf.description}</p>}
@@ -54,15 +58,36 @@ function TurfDetail() {
                 <h3 className="font-semibold text-gray-900">Amenities</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {turf.amenities.map((a) => (
-                    <span key={a.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {a.name}
-                    </span>
+                    <span key={a.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{a.name}</span>
                   ))}
                 </div>
               </div>
             )}
 
-            <button className="mt-6 rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700">
+            {turf.other_amenities && (
+              <p className="mt-2 text-sm text-gray-600">Also: {turf.other_amenities}</p>
+            )}
+
+            {hasLocation && (
+              <div className="mt-6">
+                <h3 className="mb-2 font-semibold text-gray-900">
+                  Location
+                </h3>
+
+                <MapView position={position} />
+
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${turf.latitude},${turf.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+                >
+                  Get Directions
+                </a>
+              </div>
+            )}
+
+            <button className="mt-6 block rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700">
               Book Now
             </button>
           </div>
