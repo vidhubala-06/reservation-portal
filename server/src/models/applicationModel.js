@@ -32,3 +32,41 @@ export const createApplication = async (data) => {
   );
   return result.insertId;
 };
+
+// List applications awaiting review
+export const getPendingApplications = async () => {
+  const [rows] = await pool.query(
+    `SELECT ta.id, ta.turf_name, ta.applicant_name, ta.applicant_email,
+            ta.location_address, ta.status, ta.created_at,
+            COALESCE(sc.name, ta.custom_sport) AS sport
+     FROM turf_applications ta
+     LEFT JOIN sport_categories sc ON ta.sport_category_id = sc.id
+     WHERE ta.status IN ('pending','needs_correction')
+     ORDER BY ta.created_at ASC`
+  );
+  return rows;
+};
+
+// Full application detail (parses JSON, resolves amenity names)
+export const getApplicationById = async (id) => {
+  const [rows] = await pool.query(
+    `SELECT ta.*, COALESCE(sc.name, ta.custom_sport) AS sport
+     FROM turf_applications ta
+     LEFT JOIN sport_categories sc ON ta.sport_category_id = sc.id
+     WHERE ta.id = ?`,
+    [id]
+  );
+  const app = rows[0];
+  if (!app) return null;
+
+  try { app.photos = app.photos ? JSON.parse(app.photos) : []; } catch { app.photos = []; }
+  try { app.amenities = app.amenities ? JSON.parse(app.amenities) : []; } catch { app.amenities = []; }
+
+  if (app.amenities.length > 0) {
+    const [amenRows] = await pool.query("SELECT name FROM amenities WHERE id IN (?)", [app.amenities]);
+    app.amenityNames = amenRows.map((a) => a.name);
+  } else {
+    app.amenityNames = [];
+  }
+  return app;
+};

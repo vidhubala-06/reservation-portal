@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Turfs from "./pages/Turfs.jsx";
 import TurfDetail from "./pages/TurfDetail.jsx";
 import PostTurf from "./pages/PostTurf.jsx";
+import ApplicationReview from "./pages/ApplicationReview.jsx";
 
 function App() {
   return (
@@ -34,6 +35,11 @@ function App() {
         <PostTurf />
       </ProtectedRoute>
      } />
+      <Route path="/admin/applications/:id" element={
+        <ProtectedRoute allowedRoles={["admin"]}>
+          <ApplicationReview />
+        </ProtectedRoute>
+      } />
     </Routes>
   );
 }
