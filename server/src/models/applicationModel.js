@@ -47,7 +47,15 @@ export const getPendingApplications = async () => {
   return rows;
 };
 
-// Full application detail (parses JSON, resolves amenity names)
+// Handles both cases: already-parsed (JSON column) or a string
+const parseJson = (val, fallback = []) => {
+  if (val == null) return fallback;
+  if (typeof val === "string") {
+    try { return JSON.parse(val); } catch { return fallback; }
+  }
+  return val; // mysql2 already parsed the JSON column
+};
+
 export const getApplicationById = async (id) => {
   const [rows] = await pool.query(
     `SELECT ta.*, COALESCE(sc.name, ta.custom_sport) AS sport
@@ -59,8 +67,8 @@ export const getApplicationById = async (id) => {
   const app = rows[0];
   if (!app) return null;
 
-  try { app.photos = app.photos ? JSON.parse(app.photos) : []; } catch { app.photos = []; }
-  try { app.amenities = app.amenities ? JSON.parse(app.amenities) : []; } catch { app.amenities = []; }
+  app.photos = parseJson(app.photos, []);
+  app.amenities = parseJson(app.amenities, []);
 
   if (app.amenities.length > 0) {
     const [amenRows] = await pool.query("SELECT name FROM amenities WHERE id IN (?)", [app.amenities]);

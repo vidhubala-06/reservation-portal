@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar.jsx";
-import MapView from "../components/MapView.jsx";
 
 function ApplicationReview() {
   const { id } = useParams();
@@ -66,9 +65,14 @@ function ApplicationReview() {
             )}
 
             {hasLocation && (
-              <div className="mt-4">
-                <MapView position={[parseFloat(app.latitude), parseFloat(app.longitude)]} height="250px" />
-              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${app.latitude},${app.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+              >
+                📍 View location on Google Maps
+              </a>
             )}
 
             {app.custom_sport && !app.sport_category_id && (
