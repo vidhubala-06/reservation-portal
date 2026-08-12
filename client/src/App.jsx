@@ -10,6 +10,7 @@ import TurfDetail from "./pages/TurfDetail.jsx";
 import PostTurf from "./pages/PostTurf.jsx";
 import ApplicationReview from "./pages/ApplicationReview.jsx";
 import EditTurf from "./pages/EditTurf.jsx";
+import MyBookings from "./pages/MyBookings.jsx";
 
 function App() {
   return (
@@ -31,6 +32,11 @@ function App() {
       } />
       <Route path="/turfs" element={<Turfs />} />
       <Route path="/turfs/:id" element={<TurfDetail />} />
+      <Route path="/my-bookings" element={
+        <ProtectedRoute>
+          <MyBookings />
+        </ProtectedRoute>
+      } />
       <Route path="/post-turf" element={
         <ProtectedRoute>
         <PostTurf />

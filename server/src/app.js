@@ -8,6 +8,7 @@ import applicationRoutes from "./routes/applicationRoutes.js";
 import metaRoutes from "./routes/metaRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import ownerRoutes from "./routes/ownerRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 
 dotenv.config();
 
@@ -25,5 +26,6 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/meta", metaRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/owner", ownerRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 export default app;

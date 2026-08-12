@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar.jsx";
 import MapView from "../components/MapView.jsx";
+import BookingWidget from "../components/BookingWidget.jsx";
 
 function TurfDetail() {
   const { id } = useParams();
@@ -100,9 +101,7 @@ function TurfDetail() {
               </div>
             )}
 
-            <button className="mt-6 block rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700">
-              Book Now
-            </button>
+            <BookingWidget turf={turf} />
           </div>
         )}
       </div>

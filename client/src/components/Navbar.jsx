@@ -14,6 +14,9 @@ function Navbar() {
       <div className="flex items-center gap-4">
         {user ? (
           <>
+            <Link to="/my-bookings" className="text-sm font-medium text-gray-700 hover:text-green-600">
+              My Bookings
+            </Link>
             {user.role === "owner" && (
               <Link to="/owner" className="text-sm font-medium text-gray-700 hover:text-green-600">
                 Owner Dashboard
