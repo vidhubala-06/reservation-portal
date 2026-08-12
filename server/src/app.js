@@ -7,6 +7,7 @@ import turfRoutes from "./routes/turfRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import metaRoutes from "./routes/metaRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import ownerRoutes from "./routes/ownerRoutes.js";
 
 dotenv.config();
 
@@ -23,5 +24,6 @@ app.use("/api/turfs", turfRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/meta", metaRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/owner", ownerRoutes);
 
 export default app;

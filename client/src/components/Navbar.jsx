@@ -6,7 +6,11 @@ function Navbar() {
 
   return (
     <nav className="flex items-center justify-between bg-white px-6 py-4 shadow-sm">
-      <Link to="/" className="text-xl font-bold text-green-600">Reservation Portal</Link>
+      <div className="flex items-center gap-6">
+        <Link to="/" className="text-xl font-bold text-green-600">Reservation Portal</Link>
+        <Link to="/turfs" className="text-sm font-medium text-gray-700 hover:text-green-600">Browse Turfs</Link>
+      </div>
+
       <div className="flex items-center gap-4">
         {user ? (
           <>

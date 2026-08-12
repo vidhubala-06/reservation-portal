@@ -9,6 +9,7 @@ import Turfs from "./pages/Turfs.jsx";
 import TurfDetail from "./pages/TurfDetail.jsx";
 import PostTurf from "./pages/PostTurf.jsx";
 import ApplicationReview from "./pages/ApplicationReview.jsx";
+import EditTurf from "./pages/EditTurf.jsx";
 
 function App() {
   return (
@@ -38,6 +39,11 @@ function App() {
       <Route path="/admin/applications/:id" element={
         <ProtectedRoute allowedRoles={["admin"]}>
           <ApplicationReview />
+        </ProtectedRoute>
+      } />
+      <Route path="/owner/turfs/:id/edit" element={
+        <ProtectedRoute allowedRoles={["owner"]}>
+          <EditTurf />
         </ProtectedRoute>
       } />
     </Routes>
