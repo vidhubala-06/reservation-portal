@@ -23,8 +23,7 @@ export const book = async (req, res) => {
     const errors = {
       turf_unavailable: [400, "Turf is not available"],
       outside_hours: [400, "Selected time is outside operating hours"],
-      slot_blocked: [409, "A selected slot is blocked for maintenance"],
-      slot_taken: [409, "One or more slots were just booked — please pick another time"],
+      slot_taken: [409, "One or more slots are no longer available — please pick another time"],
     };
     if (result.error) {
       const [code, message] = errors[result.error] || [400, "Booking failed"];

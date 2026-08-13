@@ -46,3 +46,46 @@ export const updateOwnerTurf = async (turfId, userId, data) => {
   );
   return { ok: true };
 };
+
+// Ownership check reused by slot actions
+export const ownsTurf = async (turfId, userId) => {
+  const [rows] = await pool.query(
+    `SELECT t.id FROM turfs t
+     JOIN owner_profiles op ON t.owner_id = op.id
+     WHERE t.id = ? AND op.user_id = ?`,
+    [turfId, userId]
+  );
+  return rows.length > 0;
+};
+
+export const blockSlot = async (turfId, userId, date, slotTime) => {
+  if (!(await ownsTurf(turfId, userId))) return { error: "not_found" };
+
+  try {
+    await pool.query(
+      "INSERT INTO slot_reservations (turf_id, slot_date, slot_time, type) VALUES (?, ?, ?, 'blocked')",
+      [turfId, date, slotTime]
+    );
+    return { ok: true };
+  } catch (err) {
+    if (err.code === "ER_DUP_ENTRY") {
+      // slot already occupied — is it booked or already blocked?
+      const [rows] = await pool.query(
+        "SELECT type FROM slot_reservations WHERE turf_id = ? AND slot_date = ? AND slot_time = ?",
+        [turfId, date, slotTime]
+      );
+      if (rows[0]?.type === "booked") return { error: "already_booked" };
+      return { ok: true }; // already blocked → idempotent success
+    }
+    throw err;
+  }
+};
+
+export const unblockSlot = async (turfId, userId, date, slotTime) => {
+  if (!(await ownsTurf(turfId, userId))) return { error: "not_found" };
+  await pool.query(
+    "DELETE FROM slot_reservations WHERE turf_id = ? AND slot_date = ? AND slot_time = ? AND type = 'blocked'",
+    [turfId, date, slotTime]
+  );
+  return { ok: true };
+};

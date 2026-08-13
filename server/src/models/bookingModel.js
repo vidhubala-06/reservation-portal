@@ -1,19 +1,16 @@
 import pool from "../config/db.js";
 
-// Booked + blocked slot times for a turf on a date (for the availability grid)
 export const getAvailability = async (turfId, date) => {
-  const [booked] = await pool.query(
-    "SELECT slot_time FROM booked_slots WHERE turf_id = ? AND slot_date = ?",
+  const [rows] = await pool.query(
+    "SELECT slot_time, type FROM slot_reservations WHERE turf_id = ? AND slot_date = ?",
     [turfId, date]
   );
-  const [blocked] = await pool.query(
-    "SELECT block_time AS slot_time FROM blocked_slots WHERE turf_id = ? AND block_date = ?",
-    [turfId, date]
-  );
-  return { booked: booked.map((r) => r.slot_time), blocked: blocked.map((r) => r.slot_time) };
+  return {
+    booked: rows.filter((r) => r.type === "booked").map((r) => r.slot_time),
+    blocked: rows.filter((r) => r.type === "blocked").map((r) => r.slot_time),
+  };
 };
 
-// Create a booking across consecutive 1-hour slots, atomically
 export const createBooking = async ({ turfId, customerId, bookingDate, startHour, durationHours }) => {
   const conn = await pool.getConnection();
   try {
@@ -32,18 +29,10 @@ export const createBooking = async ({ turfId, customerId, bookingDate, startHour
       await conn.rollback(); return { error: "outside_hours" };
     }
 
-    // build the consecutive slot times: "HH:00:00"
     const slotTimes = [];
     for (let h = startHour; h < startHour + durationHours; h++) {
       slotTimes.push(`${String(h).padStart(2, "0")}:00:00`);
     }
-
-    // reject if any slot is blocked for maintenance
-    const [blk] = await conn.query(
-      "SELECT block_time FROM blocked_slots WHERE turf_id = ? AND block_date = ? AND block_time IN (?)",
-      [turfId, bookingDate, slotTimes]
-    );
-    if (blk.length > 0) { await conn.rollback(); return { error: "slot_blocked" }; }
 
     const totalAmount = turf.price_per_hour * durationHours;
     const startTime = slotTimes[0];
@@ -57,11 +46,12 @@ export const createBooking = async ({ turfId, customerId, bookingDate, startHour
     );
     const bookingId = bk.insertId;
 
-    // insert each slot — the UNIQUE(turf_id, slot_date, slot_time) guarantees no double-booking
+    // Insert each slot as 'booked'. The unique constraint rejects any slot
+    // that's already booked OR blocked — no turf lock needed.
     for (const st of slotTimes) {
       await conn.query(
-        "INSERT INTO booked_slots (booking_id, turf_id, slot_date, slot_time) VALUES (?, ?, ?, ?)",
-        [bookingId, turfId, bookingDate, st]
+        "INSERT INTO slot_reservations (turf_id, slot_date, slot_time, type, booking_id) VALUES (?, ?, ?, 'booked', ?)",
+        [turfId, bookingDate, st, bookingId]
       );
     }
 
@@ -69,7 +59,7 @@ export const createBooking = async ({ turfId, customerId, bookingDate, startHour
     return { bookingId, totalAmount };
   } catch (err) {
     await conn.rollback();
-    if (err.code === "ER_DUP_ENTRY") return { error: "slot_taken" }; // someone grabbed it first
+    if (err.code === "ER_DUP_ENTRY") return { error: "slot_taken" }; // booked or blocked already
     throw err;
   } finally {
     conn.release();

@@ -51,10 +51,16 @@ function OwnerDashboard() {
                 </div>
               </Link>
 
-              <Link to={`/owner/turfs/${t.id}/edit`}
-                className="ml-4 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-                Edit
-              </Link>
+              <div className="ml-4 flex gap-2">
+                <Link to={`/owner/turfs/${t.id}/slots`}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+                  Slots
+                </Link>
+                <Link to={`/owner/turfs/${t.id}/edit`}
+                  className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                  Edit
+                </Link>
+              </div>
             </div>
           ))}
         </div>

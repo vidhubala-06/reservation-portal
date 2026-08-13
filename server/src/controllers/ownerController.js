@@ -1,4 +1,4 @@
-import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf } from "../models/ownerModel.js";
+import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot } from "../models/ownerModel.js";
 
 export const listMyTurfs = async (req, res) => {
   try {
@@ -31,6 +31,31 @@ export const editMyTurf = async (req, res) => {
     });
     if (result.error === "not_found") return res.status(404).json({ message: "Turf not found" });
     res.json({ message: "Turf updated" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const blockTurfSlot = async (req, res) => {
+  try {
+    const { date, slotTime } = req.body;
+    if (!date || !slotTime) return res.status(400).json({ message: "date and slotTime required" });
+    const r = await blockSlot(req.params.id, req.user.id, date, slotTime);
+    if (r.error === "not_found") return res.status(404).json({ message: "Turf not found" });
+    if (r.error === "already_booked") return res.status(409).json({ message: "That slot is already booked" });
+    res.json({ message: "Slot blocked" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const unblockTurfSlot = async (req, res) => {
+  try {
+    const { date, slotTime } = req.body;
+    if (!date || !slotTime) return res.status(400).json({ message: "date and slotTime required" });
+    const r = await unblockSlot(req.params.id, req.user.id, date, slotTime);
+    if (r.error === "not_found") return res.status(404).json({ message: "Turf not found" });
+    res.json({ message: "Slot unblocked" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
