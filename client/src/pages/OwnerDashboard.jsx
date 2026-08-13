@@ -27,9 +27,16 @@ function OwnerDashboard() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">My Turfs</h2>
-          <Link to="/post-turf" className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-            + Add turf
-          </Link>
+          <div className="flex gap-3">
+            <Link to="/owner/bookings"
+              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
+              View Bookings
+            </Link>
+            <Link to="/post-turf"
+              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+              + Add turf
+            </Link>
+          </div>
         </div>
 
         {loading && <p className="text-gray-500">Loading...</p>}

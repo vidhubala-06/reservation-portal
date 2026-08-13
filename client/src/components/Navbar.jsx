@@ -18,9 +18,14 @@ function Navbar() {
               My Bookings
             </Link>
             {user.role === "owner" && (
-              <Link to="/owner" className="text-sm font-medium text-gray-700 hover:text-green-600">
-                Owner Dashboard
-              </Link>
+              <>
+                <Link to="/owner" className="text-sm font-medium text-gray-700 hover:text-green-600">
+                  Owner Dashboard
+                </Link>
+                <Link to="/owner/bookings" className="text-sm font-medium text-gray-700 hover:text-green-600">
+                  Turf Bookings
+                </Link>
+              </>
             )}
             {user.role === "admin" && (
               <Link to="/admin" className="text-sm font-medium text-gray-700 hover:text-green-600">

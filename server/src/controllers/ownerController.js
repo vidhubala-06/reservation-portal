@@ -1,4 +1,5 @@
 import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot } from "../models/ownerModel.js";
+import { getOwnerBookings } from "../models/ownerModel.js";
 
 export const listMyTurfs = async (req, res) => {
   try {
@@ -56,6 +57,15 @@ export const unblockTurfSlot = async (req, res) => {
     const r = await unblockSlot(req.params.id, req.user.id, date, slotTime);
     if (r.error === "not_found") return res.status(404).json({ message: "Turf not found" });
     res.json({ message: "Slot unblocked" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listOwnerBookings = async (req, res) => {
+  try {
+    const bookings = await getOwnerBookings(req.user.id, req.query.date);
+    res.json({ bookings });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

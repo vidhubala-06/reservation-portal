@@ -12,6 +12,7 @@ import ApplicationReview from "./pages/ApplicationReview.jsx";
 import EditTurf from "./pages/EditTurf.jsx";
 import MyBookings from "./pages/MyBookings.jsx";
 import ManageSlots from "./pages/ManageSlots.jsx";
+import OwnerBookings from "./pages/OwnerBookings.jsx";
 
 function App() {
   return (
@@ -56,6 +57,11 @@ function App() {
       <Route path="/owner/turfs/:id/slots" element={
         <ProtectedRoute allowedRoles={["owner"]}>
           <ManageSlots />
+        </ProtectedRoute>
+      } />
+      <Route path="/owner/bookings" element={
+        <ProtectedRoute allowedRoles={["owner"]}>
+          <OwnerBookings />
         </ProtectedRoute>
       } />
     </Routes>

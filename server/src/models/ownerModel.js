@@ -89,3 +89,23 @@ export const unblockSlot = async (turfId, userId, date, slotTime) => {
   );
   return { ok: true };
 };
+
+// All bookings across this owner's turfs (optionally filtered by date)
+export const getOwnerBookings = async (userId, date) => {
+  let sql = `
+    SELECT b.id, b.booking_date, b.start_time, b.end_time, b.duration_hours,
+           b.total_amount, b.status,
+           t.name AS turf_name,
+           u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone
+    FROM bookings b
+    JOIN turfs t ON b.turf_id = t.id
+    JOIN owner_profiles op ON t.owner_id = op.id
+    JOIN users u ON b.customer_id = u.id
+    WHERE op.user_id = ?`;
+  const params = [userId];
+  if (date) { sql += " AND b.booking_date = ?"; params.push(date); }
+  sql += " ORDER BY b.booking_date DESC, b.start_time ASC";
+
+  const [rows] = await pool.query(sql, params);
+  return rows;
+};
