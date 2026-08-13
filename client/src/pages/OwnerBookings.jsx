@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import Navbar from "../components/Navbar.jsx";
 
 function OwnerBookings() {
@@ -49,6 +51,29 @@ function OwnerBookings() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadPDF = () => {
+    if (bookings.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Bookings${date ? " - " + new Date(date).toLocaleDateString() : ""}`, 14, 16);
+    autoTable(doc, {
+      startY: 22,
+      head: [["Turf", "Date", "Time", "Customer", "Contact", "Amount", "Status"]],
+      body: bookings.map((b) => [
+        b.turf_name,
+        new Date(b.booking_date).toLocaleDateString(),
+        `${b.start_time?.slice(0, 5)}-${b.end_time?.slice(0, 5)}`,
+        b.customer_name,
+        b.customer_phone || b.customer_email,
+        `Rs. ${(b.total_amount / 100).toFixed(0)}`,
+        b.status,
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [22, 163, 74] },
+    });
+    doc.save(`bookings${date ? "-" + date : ""}.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -64,6 +89,10 @@ function OwnerBookings() {
             <button onClick={downloadCSV} disabled={bookings.length === 0}
               className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50">
               Download CSV
+            </button>
+            <button onClick={downloadPDF} disabled={bookings.length === 0}
+              className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50">
+              Download PDF
             </button>
           </div>
         </div>
