@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt";
+import { createStaff, getStaff, revokeStaff } from "../models/ownerModel.js";
 import razorpay from "../config/razorpay.js";
 import { cancelBooking as cancelBookingModel } from "../models/bookingModel.js";
 import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot, getOwnerEarnings, cancelDayBookings } from "../models/ownerModel.js";
@@ -113,6 +115,38 @@ export const cancelDay = async (req, res) => {
     }
 
     res.json({ message: `Day closed. ${count} booking(s) cancelled and fully refunded.` });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const addStaff = async (req, res) => {
+  try {
+    const { turfId, name, email, password } = req.body;
+    if (!turfId || !name || !email || !password) return res.status(400).json({ message: "All fields are required" });
+    const passwordHash = await bcrypt.hash(password, 10);
+    const result = await createStaff(req.user.id, turfId, name, email, passwordHash);
+    if (result.error === "not_found") return res.status(404).json({ message: "Turf not found" });
+    if (result.error === "email_taken") return res.status(409).json({ message: "Email already in use" });
+    res.status(201).json({ message: "Staff account created" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listStaff = async (req, res) => {
+  try {
+    res.json({ staff: await getStaff(req.user.id) });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const removeStaff = async (req, res) => {
+  try {
+    const result = await revokeStaff(req.params.id, req.user.id);
+    if (result.error === "not_found") return res.status(404).json({ message: "Staff not found" });
+    res.json({ message: "Staff revoked" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

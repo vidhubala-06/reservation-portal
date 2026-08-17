@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import Navbar from "../components/Navbar.jsx";
 
 function MyBookings() {
@@ -12,6 +13,19 @@ function MyBookings() {
   const [ratingId, setRatingId] = useState(null);
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState("");
+  const [qrShownId, setQrShownId] = useState(null);
+  const [qrData, setQrData] = useState("");
+
+  const showQR = async (b) => {
+    if (qrShownId === b.id) { setQrShownId(null); return; }
+    try {
+      const url = await QRCode.toDataURL(b.checkin_token, { width: 220 });
+      setQrData(url);
+      setQrShownId(b.id);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const load = async () => {
     try {
@@ -25,7 +39,7 @@ function MyBookings() {
   };
   useEffect(() => { load(); }, []);
 
-  const downloadReceipt = (b) => {
+  const downloadReceipt = async (b) => {
     const doc = new jsPDF();
     doc.setFontSize(18); doc.text("Reservation Portal", 20, 20);
     doc.setFontSize(12); doc.text("Booking Receipt", 20, 30);
@@ -38,6 +52,11 @@ function MyBookings() {
     line("Time", `${b.start_time?.slice(0,5)} - ${b.end_time?.slice(0,5)}`);
     line("Amount", `Rs. ${(b.total_amount/100).toFixed(0)}`);
     line("Status", b.status);
+    try {
+      const qr = await QRCode.toDataURL(b.checkin_token, { width: 200 });
+      doc.addImage(qr, "PNG", 140, 40, 45, 45);
+      doc.setFontSize(9); doc.text("Check-in QR", 150, 90);
+    } catch { /* ignore */ }
     doc.save(`receipt-${b.id}.pdf`);
   };
 
@@ -98,6 +117,10 @@ function MyBookings() {
                   <button onClick={() => downloadReceipt(b)} className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700">Receipt</button>
                   {b.status === "confirmed" && (
                     <>
+                      <button onClick={() => showQR(b)}
+                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+                        Check-in QR
+                      </button>
                       <button onClick={() => cancelBooking(b.id)} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">Cancel</button>
                       <button onClick={() => setReportingId(reportingId === b.id ? null : b.id)} className="rounded-lg bg-yellow-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-yellow-600">Report Issue</button>
                       <button onClick={() => setRatingId(ratingId === b.id ? null : b.id)}
@@ -141,6 +164,16 @@ function MyBookings() {
                     <button onClick={() => submitRating(b.id)} className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700">Submit review</button>
                     <button onClick={() => setRatingId(null)} className="rounded-lg bg-gray-200 px-4 py-1.5 text-sm text-gray-700">Cancel</button>
                   </div>
+                </div>
+              )}
+
+              {qrShownId === b.id && (
+                <div className="mt-3 flex flex-col items-center border-t pt-3">
+                  <img src={qrData} alt="Check-in QR" className="h-48 w-48" />
+                  <p className="mt-2 text-xs text-gray-500">Show this QR at the turf to check in.</p>
+                  {b.checked_in ? (
+                    <p className="text-xs font-medium text-green-600">Already checked in ✓</p>
+                  ) : null}
                 </div>
               )}
             </div>

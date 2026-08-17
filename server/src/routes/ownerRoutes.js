@@ -2,6 +2,7 @@ import express from "express";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import { listMyTurfs, getMyTurf, editMyTurf, blockTurfSlot, unblockTurfSlot, earnings, cancelDay } from "../controllers/ownerController.js";
 import { listOwnerBookings } from "../controllers/ownerController.js";
+import { addStaff, listStaff, removeStaff } from "../controllers/ownerController.js";
 const router = express.Router();
 router.use(protect, authorizeRoles("owner"));
 
@@ -13,5 +14,9 @@ router.patch("/turfs/:id", editMyTurf);
 router.post("/turfs/:id/block", blockTurfSlot);
 router.post("/turfs/:id/unblock", unblockTurfSlot);
 router.post("/turfs/:id/cancel-day", cancelDay);
+
+router.post("/staff", addStaff);
+router.get("/staff", listStaff);
+router.delete("/staff/:id", removeStaff);
 
 export default router;

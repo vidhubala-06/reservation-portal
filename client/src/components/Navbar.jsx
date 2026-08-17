@@ -9,7 +9,12 @@ function Navbar() {
     <nav className="flex items-center justify-between bg-white px-6 py-4 shadow-sm">
       <div className="flex items-center gap-6">
         <Link to="/" className="text-xl font-bold text-green-600">Reservation Portal</Link>
-        <Link to="/turfs" className="text-sm font-medium text-gray-700 hover:text-green-600">Browse Turfs</Link>
+        {user?.role !== "staff" && (
+          <Link to="/turfs" className="text-sm font-medium text-gray-700 hover:text-green-600">Browse Turfs</Link>
+        )}
+        {user?.role === "staff" && (
+          <Link to="/staff" className="text-sm font-medium text-gray-700 hover:text-green-600">Check-in</Link>
+        )}
       </div>
 
       <div className="flex items-center gap-4">

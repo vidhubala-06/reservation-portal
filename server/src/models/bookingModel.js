@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import pool from "../config/db.js";
 
 export const getAvailability = async (turfId, date) => {
@@ -70,7 +71,7 @@ export const createBooking = async ({ turfId, customerId, bookingDate, startHour
 export const getCustomerBookings = async (customerId) => {
   const [rows] = await pool.query(
     `SELECT b.id, b.booking_date, b.start_time, b.end_time, b.duration_hours,
-            b.total_amount, b.status,
+            b.total_amount, b.status, b.checkin_token, b.checked_in,
             t.name AS turf_name, t.location_address
      FROM bookings b
      JOIN turfs t ON b.turf_id = t.id
@@ -130,12 +131,13 @@ export const createHeldBooking = async ({ turfId, customerId, bookingDate, start
     const startTime = slotTimes[0];
     const endTime = `${String(startHour + durationHours).padStart(2, "0")}:00:00`;
     const holdExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const checkinToken = crypto.randomBytes(16).toString("hex");
 
     const [bk] = await conn.query(
       `INSERT INTO bookings
-         (turf_id, customer_id, booking_date, start_time, end_time, duration_hours, total_amount, status, payment_status, hold_expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'held', 'unpaid', ?)`,
-      [turfId, customerId, bookingDate, startTime, endTime, durationHours, totalAmount, holdExpires]
+         (turf_id, customer_id, booking_date, start_time, end_time, duration_hours, total_amount, status, payment_status, hold_expires_at, checkin_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'held', 'unpaid', ?, ?)`,
+      [turfId, customerId, bookingDate, startTime, endTime, durationHours, totalAmount, holdExpires, checkinToken]
     );
     const bookingId = bk.insertId;
 

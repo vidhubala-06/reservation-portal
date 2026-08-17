@@ -136,3 +136,53 @@ export const cancelDayBookings = async (turfId, userId, date) => {
   );
   return { bookings };
 };
+
+export const createStaff = async (ownerUserId, turfId, name, email, passwordHash) => {
+  if (!(await ownsTurf(turfId, ownerUserId))) return { error: "not_found" };
+  const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+  if (existing.length > 0) return { error: "email_taken" };
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [u] = await conn.query(
+      "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'staff')",
+      [name, email, passwordHash]
+    );
+    await conn.query("INSERT INTO turf_staff (staff_user_id, turf_id) VALUES (?, ?)", [u.insertId, turfId]);
+    await conn.commit();
+    return { ok: true };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+};
+
+export const getStaff = async (ownerUserId) => {
+  const [rows] = await pool.query(
+    `SELECT u.id, u.name, u.email, t.name AS turf_name
+     FROM turf_staff ts
+     JOIN users u ON ts.staff_user_id = u.id
+     JOIN turfs t ON ts.turf_id = t.id
+     JOIN owner_profiles op ON t.owner_id = op.id
+     WHERE op.user_id = ?
+     ORDER BY ts.id DESC`,
+    [ownerUserId]
+  );
+  return rows;
+};
+
+export const revokeStaff = async (staffUserId, ownerUserId) => {
+  const [[row]] = await pool.query(
+    `SELECT ts.id FROM turf_staff ts
+     JOIN turfs t ON ts.turf_id = t.id
+     JOIN owner_profiles op ON t.owner_id = op.id
+     WHERE ts.staff_user_id = ? AND op.user_id = ?`,
+    [staffUserId, ownerUserId]
+  );
+  if (!row) return { error: "not_found" };
+  await pool.query("DELETE FROM users WHERE id = ?", [staffUserId]); // cascade removes turf_staff
+  return { ok: true };
+};

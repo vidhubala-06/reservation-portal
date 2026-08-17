@@ -21,6 +21,7 @@ function Login() {
       if (from) navigate(from, { replace: true });          // return to the form
       else if (user.role === "admin") navigate("/admin");
       else if (user.role === "owner") navigate("/owner");
+      else if (user.role === "staff") navigate("/staff");
       else navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

@@ -19,6 +19,8 @@ import AdminFlaggedTurfs from "./pages/AdminFlaggedTurfs.jsx";
 import AdminOwners from "./pages/AdminOwners.jsx";
 import AdminTurfs from "./pages/AdminTurfs.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import ManageStaff from "./pages/ManageStaff.jsx";
+import StaffDashboard from "./pages/StaffDashboard.jsx";
 
 function App() {
   return (
@@ -73,6 +75,16 @@ function App() {
       <Route path="/owner/earnings" element={
         <ProtectedRoute allowedRoles={["owner"]}>
           <OwnerEarnings />
+        </ProtectedRoute>
+      } />
+      <Route path="/owner/staff" element={
+        <ProtectedRoute allowedRoles={["owner"]}>
+          <ManageStaff />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff" element={
+        <ProtectedRoute allowedRoles={["staff"]}>
+          <StaffDashboard />
         </ProtectedRoute>
       } />
       <Route path="/admin/disputes" element={
