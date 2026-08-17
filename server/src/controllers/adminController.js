@@ -1,7 +1,12 @@
+import razorpay from "../config/razorpay.js";
+import { cancelBooking as cancelBookingModel } from "../models/bookingModel.js";
 import {
   getPendingApplications, getApplicationById,
   approveApplication, rejectApplication,
 } from "../models/applicationModel.js";
+import {
+  getOpenDisputes, getDisputeBookingInfo, markDisputeResolved, strikeTurf,
+} from "../models/disputeModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
 export const listPendingApplications = async (req, res) => {
@@ -65,6 +70,52 @@ export const reject = async (req, res) => {
     }
 
     res.json({ message: "Application rejected" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listDisputes = async (req, res) => {
+  try {
+    res.json({ disputes: await getOpenDisputes() });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// POST /api/admin/disputes/:id/resolve  body: { action: 'refund' | 'deny' }
+export const resolveDispute = async (req, res) => {
+  try {
+    const disputeId = req.params.id;
+    const { action } = req.body;
+    const info = await getDisputeBookingInfo(disputeId);
+    if (!info) return res.status(404).json({ message: "Dispute not found" });
+    if (info.dispute_status !== "open") return res.status(400).json({ message: "Dispute already resolved" });
+
+    if (action === "deny") {
+      await markDisputeResolved(disputeId, "denied");
+      return res.json({ message: "Dispute denied." });
+    }
+
+    // full refund to customer; owner bears the FULL cost; platform keeps commission
+    if (info.gateway_payment_id && info.total_amount > 0 && info.booking_status !== "cancelled") {
+      await razorpay.payments.refund(info.gateway_payment_id, { amount: info.total_amount });
+    }
+    if (info.booking_status !== "cancelled") {
+      await cancelBookingModel(info.booking_id, {
+        refundAmount: info.total_amount || 0,
+        ownerReversal: info.total_amount || 0, // owner reimburses the whole amount
+        commissionRefunded: 0,                 // platform keeps its commission
+        paymentId: info.payment_id,
+        reason: "dispute",
+        refundType: "full",
+        paymentStatus: "refunded",
+      });
+    }
+    await strikeTurf(info.turf_id);
+    await markDisputeResolved(disputeId, "refunded");
+
+    res.json({ message: "Customer refunded, cost charged to the owner, and a strike recorded on the turf." });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

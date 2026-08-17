@@ -11,6 +11,7 @@ import ownerRoutes from "./routes/ownerRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { webhook } from "./controllers/paymentController.js";
+import disputeRoutes from "./routes/disputeRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/disputes", disputeRoutes);
 
 
 export default app;

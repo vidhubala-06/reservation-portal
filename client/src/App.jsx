@@ -14,6 +14,7 @@ import MyBookings from "./pages/MyBookings.jsx";
 import ManageSlots from "./pages/ManageSlots.jsx";
 import OwnerBookings from "./pages/OwnerBookings.jsx";
 import OwnerEarnings from "./pages/OwnerEarnings.jsx";
+import AdminDisputes from "./pages/AdminDisputes.jsx";
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
       <Route path="/owner/earnings" element={
         <ProtectedRoute allowedRoles={["owner"]}>
           <OwnerEarnings />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/disputes" element={
+        <ProtectedRoute allowedRoles={["admin"]}>
+          <AdminDisputes />
         </ProtectedRoute>
       } />
     </Routes>

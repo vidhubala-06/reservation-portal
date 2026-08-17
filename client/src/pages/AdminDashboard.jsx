@@ -25,7 +25,12 @@ function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Pending Turf Applications</h2>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">Pending Turf Applications</h2>
+          <Link to="/admin/disputes" className="text-sm font-medium text-green-600 hover:underline">
+            View open disputes →
+          </Link>
+        </div>
 
         {loading && <p className="text-gray-500">Loading...</p>}
         {error && <p className="text-red-600">{error}</p>}
