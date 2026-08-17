@@ -27,9 +27,20 @@ function AdminDashboard() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Pending Turf Applications</h2>
-          <Link to="/admin/disputes" className="text-sm font-medium text-green-600 hover:underline">
-            View open disputes →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/admin/disputes" className="text-sm font-medium text-green-600 hover:underline">
+              View open disputes →
+            </Link>
+            <Link to="/admin/flagged-turfs" className="text-sm font-medium text-green-600 hover:underline">
+              View flagged turfs →
+            </Link>
+            <Link to="/admin/owners" className="text-sm font-medium text-green-600 hover:underline">
+              View owners →
+            </Link>
+            <Link to="/admin/turfs" className="text-sm font-medium text-green-600 hover:underline">
+              Manage all turfs →
+            </Link>
+          </div>
         </div>
 
         {loading && <p className="text-gray-500">Loading...</p>}

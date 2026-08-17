@@ -159,6 +159,11 @@ function BookingWidget({ turf }) {
         className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50">
         {busy ? "Processing..." : user ? "Book & Pay" : "Login to book"}
       </button>
+
+      <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500">
+        <span className="font-medium text-gray-600">Cancellation policy:</span> Full refund if cancelled
+        more than 24 hours before the slot · 50% refund between 6–24 hours · no refund within 6 hours or for no-shows.
+      </p>
     </div>
   );
 }

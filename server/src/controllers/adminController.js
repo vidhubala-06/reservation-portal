@@ -7,6 +7,7 @@ import {
 import {
   getOpenDisputes, getDisputeBookingInfo, markDisputeResolved, strikeTurf,
 } from "../models/disputeModel.js";
+import { getFlaggedTurfs, setTurfStatus, getOwners, getAllTurfs, getTurfOwnerInfo } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
 export const listPendingApplications = async (req, res) => {
@@ -116,6 +117,78 @@ export const resolveDispute = async (req, res) => {
     await markDisputeResolved(disputeId, "refunded");
 
     res.json({ message: "Customer refunded, cost charged to the owner, and a strike recorded on the turf." });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listFlaggedTurfs = async (req, res) => {
+  try {
+    res.json({ turfs: await getFlaggedTurfs() });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const suspendTurf = async (req, res) => {
+  try {
+    await setTurfStatus(req.params.id, "taken_down");
+    res.json({ message: "Turf suspended" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const reinstateTurf = async (req, res) => {
+  try {
+    await setTurfStatus(req.params.id, "approved");
+    res.json({ message: "Turf reinstated" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listOwners = async (req, res) => {
+  try {
+    res.json({ owners: await getOwners(req.query.search) });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const listAllTurfs = async (req, res) => {
+  try {
+    res.json({ turfs: await getAllTurfs() });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const removeTurf = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ message: "A reason is required" });
+
+    const info = await getTurfOwnerInfo(req.params.id);
+    if (!info) return res.status(404).json({ message: "Turf not found" });
+
+    await setTurfStatus(req.params.id, "taken_down");
+
+    // notify the owner (non-blocking)
+    try {
+      await sendEmail({
+        to: info.owner_email,
+        subject: `Your turf "${info.turf_name}" has been removed`,
+        html: `<p>Hi ${info.owner_name},</p>
+               <p>Your turf "<strong>${info.turf_name}</strong>" has been removed from Reservation Portal by our team.</p>
+               <p><strong>Reason:</strong> ${reason}</p>
+               <p>If you believe this is a mistake, please contact support.</p>`,
+      });
+    } catch (e) {
+      console.error("Removal email failed:", e.message);
+    }
+
+    res.json({ message: "Turf removed and owner notified." });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

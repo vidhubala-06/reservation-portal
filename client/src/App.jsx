@@ -15,6 +15,9 @@ import ManageSlots from "./pages/ManageSlots.jsx";
 import OwnerBookings from "./pages/OwnerBookings.jsx";
 import OwnerEarnings from "./pages/OwnerEarnings.jsx";
 import AdminDisputes from "./pages/AdminDisputes.jsx";
+import AdminFlaggedTurfs from "./pages/AdminFlaggedTurfs.jsx";
+import AdminOwners from "./pages/AdminOwners.jsx";
+import AdminTurfs from "./pages/AdminTurfs.jsx";
 
 function App() {
   return (
@@ -74,6 +77,21 @@ function App() {
       <Route path="/admin/disputes" element={
         <ProtectedRoute allowedRoles={["admin"]}>
           <AdminDisputes />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/flagged-turfs" element={
+        <ProtectedRoute allowedRoles={["admin"]}>
+          <AdminFlaggedTurfs />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/owners" element={
+        <ProtectedRoute allowedRoles={["admin"]}>
+          <AdminOwners />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/turfs" element={
+        <ProtectedRoute allowedRoles={["admin"]}>
+          <AdminTurfs />
         </ProtectedRoute>
       } />
     </Routes>
