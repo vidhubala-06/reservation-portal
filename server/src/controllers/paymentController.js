@@ -4,7 +4,7 @@ import pool from "../config/db.js";
 import {
   createHeldBooking, confirmBookingPaid, releaseHeldBooking, getBookingForPayment,
 } from "../models/bookingModel.js";
-import { recordPayment } from "../models/paymentModel.js";
+import { recordPayment, recordOwnerEarning } from "../models/paymentModel.js";
 
 // POST /api/payments/order — reserve slots + create a Razorpay order
 export const createOrder = async (req, res) => {
@@ -70,15 +70,16 @@ export const verifyPayment = async (req, res) => {
 
       await confirmBookingPaid(bookingId);
       try {
-        await recordPayment({
+        const paymentId = await recordPayment({
           bookingId,
           totalAmount: booking.total_amount,
           commission,
           ownerShare,
           gatewayPaymentId: razorpay_payment_id,
         });
+        await recordOwnerEarning(bookingId, ownerShare, paymentId, `Booking #${bookingId}`);
       } catch (e) {
-        if (e.code !== "ER_DUP_ENTRY") throw e; // already recorded by the webhook — fine
+        if (e.code !== "ER_DUP_ENTRY") throw e;
       }
     }
 
@@ -142,12 +143,16 @@ export const webhook = async (req, res) => {
 
         await pool.query("UPDATE bookings SET status='confirmed', payment_status='paid' WHERE id = ?", [booking.id]);
         try {
-          await pool.query(
-            "INSERT INTO payments (booking_id, total_amount, commission, owner_share, gateway_payment_id, status) VALUES (?, ?, ?, ?, ?, 'succeeded')",
-            [booking.id, booking.total_amount, commission, ownerShare, payment.id]
-          );
+          const paymentId = await recordPayment({
+            bookingId: booking.id,
+            totalAmount: booking.total_amount,
+            commission,
+            ownerShare,
+            gatewayPaymentId: payment.id,
+          });
+          await recordOwnerEarning(booking.id, ownerShare, paymentId, `Booking #${booking.id}`);
         } catch (e) {
-          if (e.code !== "ER_DUP_ENTRY") throw e; // already recorded by /verify — fine
+          if (e.code !== "ER_DUP_ENTRY") throw e;
         }
       }
     }

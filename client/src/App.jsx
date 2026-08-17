@@ -13,6 +13,7 @@ import EditTurf from "./pages/EditTurf.jsx";
 import MyBookings from "./pages/MyBookings.jsx";
 import ManageSlots from "./pages/ManageSlots.jsx";
 import OwnerBookings from "./pages/OwnerBookings.jsx";
+import OwnerEarnings from "./pages/OwnerEarnings.jsx";
 
 function App() {
   return (
@@ -62,6 +63,11 @@ function App() {
       <Route path="/owner/bookings" element={
         <ProtectedRoute allowedRoles={["owner"]}>
           <OwnerBookings />
+        </ProtectedRoute>
+      } />
+      <Route path="/owner/earnings" element={
+        <ProtectedRoute allowedRoles={["owner"]}>
+          <OwnerEarnings />
         </ProtectedRoute>
       } />
     </Routes>

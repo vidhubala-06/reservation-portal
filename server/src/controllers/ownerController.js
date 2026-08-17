@@ -1,4 +1,4 @@
-import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot } from "../models/ownerModel.js";
+import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot, getOwnerEarnings } from "../models/ownerModel.js";
 import { getOwnerBookings } from "../models/ownerModel.js";
 
 export const listMyTurfs = async (req, res) => {
@@ -66,6 +66,14 @@ export const listOwnerBookings = async (req, res) => {
   try {
     const bookings = await getOwnerBookings(req.user.id, req.query.date);
     res.json({ bookings });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const earnings = async (req, res) => {
+  try {
+    res.json(await getOwnerEarnings(req.user.id));
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

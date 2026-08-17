@@ -109,3 +109,16 @@ export const getOwnerBookings = async (userId, date) => {
   const [rows] = await pool.query(sql, params);
   return rows;
 };
+
+export const getOwnerEarnings = async (userId) => {
+  const [[profile]] = await pool.query(
+    "SELECT id, balance FROM owner_profiles WHERE user_id = ?",
+    [userId]
+  );
+  if (!profile) return { balance: 0, transactions: [] };
+  const [transactions] = await pool.query(
+    "SELECT id, amount, type, reason, created_at FROM owner_balance_transactions WHERE owner_id = ? ORDER BY id DESC",
+    [profile.id]
+  );
+  return { balance: profile.balance, transactions };
+};
