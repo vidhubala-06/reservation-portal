@@ -58,14 +58,54 @@ function BookingWidget({ turf }) {
     }
     setBusy(true); setMsg(""); setErr("");
     try {
-      await axios.post("/bookings", { turfId: turf.id, date, startHour, durationHours: duration });
-      setMsg("Booking confirmed!");
-      setStartHour(null);
-      loadAvailability();
+      // 1. reserve slots + create the Razorpay order
+      const { data } = await axios.post("/payments/order", {
+        turfId: turf.id, date, startHour, durationHours: duration,
+      });
+
+      // 2. open Razorpay checkout
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: "INR",
+        name: "Reservation Portal",
+        description: `${turf.name} booking`,
+        order_id: data.orderId,
+        prefill: { name: user.name, email: user.email },
+        theme: { color: "#16a34a" },
+        handler: async (response) => {
+          // 3. verify the payment on success
+          try {
+            await axios.post("/payments/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookingId: data.bookingId,
+            });
+            setMsg("Payment successful! Booking confirmed.");
+            setStartHour(null);
+            loadAvailability();
+          } catch {
+            setErr("Payment verification failed. Please contact support.");
+          } finally {
+            setBusy(false);
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            // released the held slot if they close without paying
+            await axios.post("/payments/cancel", { bookingId: data.bookingId });
+            loadAvailability();
+            setBusy(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (e) {
-      setErr(e.response?.data?.message || "Booking failed");
+      setErr(e.response?.data?.message || "Could not start payment");
       loadAvailability();
-    } finally {
       setBusy(false);
     }
   };
@@ -117,7 +157,7 @@ function BookingWidget({ turf }) {
 
       <button onClick={handleBook} disabled={busy || (user && !rangeFree())}
         className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50">
-        {busy ? "Booking..." : user ? "Confirm Booking" : "Login to book"}
+        {busy ? "Processing..." : user ? "Book & Pay" : "Login to book"}
       </button>
     </div>
   );

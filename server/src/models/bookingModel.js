@@ -80,3 +80,75 @@ export const getCustomerBookings = async (customerId) => {
   );
   return rows;
 };
+
+// Reserve slots as a HELD booking (pending payment)
+export const createHeldBooking = async ({ turfId, customerId, bookingDate, startHour, durationHours }) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [turfRows] = await conn.query(
+      "SELECT price_per_hour, opening_time, closing_time, status FROM turfs WHERE id = ?",
+      [turfId]
+    );
+    const turf = turfRows[0];
+    if (!turf || turf.status !== "approved") { await conn.rollback(); return { error: "turf_unavailable" }; }
+
+    const openHour = parseInt(turf.opening_time.slice(0, 2), 10);
+    const closeHour = parseInt(turf.closing_time.slice(0, 2), 10);
+    if (startHour < openHour || startHour + durationHours > closeHour) {
+      await conn.rollback(); return { error: "outside_hours" };
+    }
+
+    const slotTimes = [];
+    for (let h = startHour; h < startHour + durationHours; h++) {
+      slotTimes.push(`${String(h).padStart(2, "0")}:00:00`);
+    }
+
+    const totalAmount = turf.price_per_hour * durationHours;
+    const startTime = slotTimes[0];
+    const endTime = `${String(startHour + durationHours).padStart(2, "0")}:00:00`;
+    const holdExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+    const [bk] = await conn.query(
+      `INSERT INTO bookings
+         (turf_id, customer_id, booking_date, start_time, end_time, duration_hours, total_amount, status, payment_status, hold_expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'held', 'unpaid', ?)`,
+      [turfId, customerId, bookingDate, startTime, endTime, durationHours, totalAmount, holdExpires]
+    );
+    const bookingId = bk.insertId;
+
+    for (const st of slotTimes) {
+      await conn.query(
+        "INSERT INTO slot_reservations (turf_id, slot_date, slot_time, type, booking_id) VALUES (?, ?, ?, 'booked', ?)",
+        [turfId, bookingDate, st, bookingId]
+      );
+    }
+
+    await conn.commit();
+    return { bookingId, totalAmount };
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_DUP_ENTRY") return { error: "slot_taken" };
+    throw err;
+  } finally {
+    conn.release();
+  }
+};
+
+export const confirmBookingPaid = async (bookingId) => {
+  await pool.query("UPDATE bookings SET status='confirmed', payment_status='paid' WHERE id = ?", [bookingId]);
+};
+
+// Release a held booking (deletes it; slot_reservations cascade-delete)
+export const releaseHeldBooking = async (bookingId, customerId) => {
+  await pool.query("DELETE FROM bookings WHERE id = ? AND customer_id = ? AND status = 'held'", [bookingId, customerId]);
+};
+
+export const getBookingForPayment = async (bookingId, customerId) => {
+  const [rows] = await pool.query(
+    "SELECT id, total_amount, status FROM bookings WHERE id = ? AND customer_id = ?",
+    [bookingId, customerId]
+  );
+  return rows[0] || null;
+};

@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.23.2",
+    "razorpay": "^2.9.8",
     "resend": "^6.19.0"
   },
   "devDependencies": {
