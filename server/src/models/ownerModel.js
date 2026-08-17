@@ -127,7 +127,7 @@ export const getOwnerEarnings = async (userId) => {
 export const cancelDayBookings = async (turfId, userId, date) => {
   if (!(await ownsTurf(turfId, userId))) return { error: "not_found" };
   const [bookings] = await pool.query(
-    `SELECT b.id, p.id AS payment_id, p.gateway_payment_id,
+    `SELECT b.id, b.customer_id, p.id AS payment_id, p.gateway_payment_id,
             p.total_amount, p.owner_share, p.commission
      FROM bookings b
      LEFT JOIN payments p ON p.booking_id = b.id

@@ -11,6 +11,9 @@ function TurfCard({ turf }) {
       </div>
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900">{turf.name}</h3>
+        {turf.avg_rating && (
+          <p className="text-xs text-yellow-600">⭐ {turf.avg_rating} ({turf.review_count})</p>
+        )}
         <p className="text-sm text-gray-500">{turf.location_address}</p>
         <div className="mt-2 flex items-center justify-between">
           <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">

@@ -2,6 +2,7 @@ import razorpay from "../config/razorpay.js";
 import { cancelBooking as cancelBookingModel } from "../models/bookingModel.js";
 import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot, getOwnerEarnings, cancelDayBookings } from "../models/ownerModel.js";
 import { getOwnerBookings } from "../models/ownerModel.js";
+import { createNotification } from "../models/notificationModel.js";
 
 export const listMyTurfs = async (req, res) => {
   try {
@@ -107,6 +108,7 @@ export const cancelDay = async (req, res) => {
         refundType: "full",
         paymentStatus: "refunded",
       });
+      await createNotification(b.customer_id, `Your booking on ${date} was cancelled due to a closure and fully refunded.`, "refund");
       count++;
     }
 

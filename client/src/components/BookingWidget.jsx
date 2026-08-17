@@ -8,7 +8,12 @@ const fmt = (h) => `${String(h).padStart(2, "0")}:00`;
 function BookingWidget({ turf }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const today = new Date().toISOString().slice(0, 10);
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmtDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = fmtDate(new Date());
+  const maxDateObj = new Date();
+  maxDateObj.setDate(maxDateObj.getDate() + 6); // today + 6 = 7-day window
+  const maxDate = fmtDate(maxDateObj);
 
   const openHour = parseInt(turf.opening_time.slice(0, 2), 10);
   const closeHour = parseInt(turf.closing_time.slice(0, 2), 10);
@@ -40,13 +45,17 @@ function BookingWidget({ turf }) {
     setMsg(""); setErr("");
   }, [date]);
 
+  const nowHour = new Date().getHours();
+  const isToday = date === today;
+  const isPast = (h) => isToday && h <= nowHour; // slot has started or passed
+
   const isTaken = (h) => taken.includes(h);
 
   const rangeFree = () => {
     if (startHour == null) return false;
     if (startHour + duration > closeHour) return false;
     for (let h = startHour; h < startHour + duration; h++) {
-      if (!allSlots.includes(h) || isTaken(h)) return false;
+      if (!allSlots.includes(h) || isTaken(h) || isPast(h)) return false;
     }
     return true;
   };
@@ -117,22 +126,25 @@ function BookingWidget({ turf }) {
       <h3 className="mb-3 font-semibold text-gray-900">Book this turf</h3>
 
       <label className="text-sm text-gray-600">Date</label>
-      <input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)}
+      <input type="date" min={today} max={maxDate} value={date} onChange={(e) => setDate(e.target.value)}
         className="mb-3 block rounded-lg border border-gray-300 px-3 py-2" />
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {allSlots.map((h) => (
-          <button key={h} type="button" disabled={isTaken(h)} onClick={() => setStartHour(h)}
-            className={`rounded px-3 py-1 text-sm ${
-              isTaken(h)
-                ? "cursor-not-allowed bg-gray-200 text-gray-400 line-through"
-                : startHour === h
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}>
-            {fmt(h)}
-          </button>
-        ))}
+        {allSlots.map((h) => {
+          const disabled = isTaken(h) || isPast(h);
+          return (
+            <button key={h} type="button" disabled={disabled} onClick={() => setStartHour(h)}
+              className={`rounded px-3 py-1 text-sm ${
+                disabled
+                  ? "cursor-not-allowed bg-gray-200 text-gray-400 line-through"
+                  : startHour === h
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}>
+              {fmt(h)}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mb-3 flex items-center gap-3">

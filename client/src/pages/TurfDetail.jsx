@@ -10,6 +10,7 @@ function TurfDetail() {
   const [turf, setTurf] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -22,6 +23,10 @@ function TurfDetail() {
         setLoading(false);
       }
     })();
+  }, [id]);
+
+  useEffect(() => {
+    axios.get(`/reviews/turf/${id}`).then((r) => setReviews(r.data.reviews)).catch(() => {});
   }, [id]);
 
   const hasLocation = turf && turf.latitude && turf.longitude;
@@ -58,6 +63,9 @@ function TurfDetail() {
 
             <h2 className="text-2xl font-bold text-gray-900">{turf.name}</h2>
             <p className="mt-1 text-gray-500">{turf.location_address}</p>
+            {turf.avg_rating && (
+              <p className="mt-1 text-sm text-yellow-600">⭐ {turf.avg_rating} · {turf.review_count} review(s)</p>
+            )}
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm">
               <span className="rounded-full bg-green-100 px-3 py-1 font-medium text-green-700">{turf.sport}</span>
@@ -100,6 +108,23 @@ function TurfDetail() {
                 </a>
               </div>
             )}
+
+            <div className="mt-6">
+              <h3 className="mb-2 font-semibold text-gray-900">Reviews</h3>
+              {reviews.length === 0 ? (
+                <p className="text-sm text-gray-500">No reviews yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {reviews.map((rv) => (
+                    <div key={rv.id} className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-sm text-yellow-600">{"★".repeat(rv.rating)}{"☆".repeat(5 - rv.rating)}</p>
+                      {rv.comment && <p className="text-sm text-gray-700">{rv.comment}</p>}
+                      <p className="text-xs text-gray-400">{rv.customer_name} · {new Date(rv.created_at).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <BookingWidget turf={turf} />
           </div>

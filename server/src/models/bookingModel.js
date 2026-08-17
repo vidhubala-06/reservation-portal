@@ -100,6 +100,27 @@ export const createHeldBooking = async ({ turfId, customerId, bookingDate, start
       await conn.rollback(); return { error: "outside_hours" };
     }
 
+    // enforce the 7-day booking window (today .. today + 6)
+    const pad = (n) => String(n).padStart(2, "0");
+    const fmtDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const todayStr = fmtDate(new Date());
+    const maxD = new Date();
+    maxD.setDate(maxD.getDate() + 6);
+    const maxStr = fmtDate(maxD);
+    if (bookingDate < todayStr || bookingDate > maxStr) {
+      await conn.rollback();
+      return { error: "outside_window" };
+    }
+
+    // reject slots that have already passed today
+    if (bookingDate === todayStr) {
+      const nowHour = new Date().getHours();
+      if (startHour <= nowHour) {
+        await conn.rollback();
+        return { error: "past_slot" };
+      }
+    }
+
     const slotTimes = [];
     for (let h = startHour; h < startHour + durationHours; h++) {
       slotTimes.push(`${String(h).padStart(2, "0")}:00:00`);

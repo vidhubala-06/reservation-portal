@@ -9,6 +9,7 @@ import {
 } from "../models/disputeModel.js";
 import { getFlaggedTurfs, setTurfStatus, getOwners, getAllTurfs, getTurfOwnerInfo } from "../models/adminModel.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { createNotification } from "../models/notificationModel.js";
 
 export const listPendingApplications = async (req, res) => {
   try {
@@ -44,6 +45,14 @@ export const approve = async (req, res) => {
       });
     } catch (e) {
       console.error("Approval email failed:", e.message);
+    }
+
+    if (result.app?.existing_user_id) {
+      await createNotification(
+        result.app.existing_user_id,
+        `Your turf "${result.app.turf_name}" has been approved and is now live.`,
+        "turf"
+      );
     }
 
     res.json({ message: "Approved — turf created and user upgraded to owner" });

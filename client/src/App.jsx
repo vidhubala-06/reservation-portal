@@ -18,6 +18,7 @@ import AdminDisputes from "./pages/AdminDisputes.jsx";
 import AdminFlaggedTurfs from "./pages/AdminFlaggedTurfs.jsx";
 import AdminOwners from "./pages/AdminOwners.jsx";
 import AdminTurfs from "./pages/AdminTurfs.jsx";
+import Notifications from "./pages/Notifications.jsx";
 
 function App() {
   return (
@@ -92,6 +93,11 @@ function App() {
       <Route path="/admin/turfs" element={
         <ProtectedRoute allowedRoles={["admin"]}>
           <AdminTurfs />
+        </ProtectedRoute>
+      } />
+      <Route path="/notifications" element={
+        <ProtectedRoute>
+          <Notifications />
         </ProtectedRoute>
       } />
     </Routes>

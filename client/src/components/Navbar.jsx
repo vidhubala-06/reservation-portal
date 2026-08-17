@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -32,6 +33,7 @@ function Navbar() {
                 Admin Panel
               </Link>
             )}
+            <NotificationBell />
             <span className="text-sm text-gray-600">
               Hi, {user.name} <span className="text-gray-400">({user.role})</span>
             </span>

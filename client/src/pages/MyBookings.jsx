@@ -9,6 +9,9 @@ function MyBookings() {
   const [reportingId, setReportingId] = useState(null);
   const [issueType, setIssueType] = useState("turf_closed");
   const [issueDesc, setIssueDesc] = useState("");
+  const [ratingId, setRatingId] = useState(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState("");
 
   const load = async () => {
     try {
@@ -59,6 +62,16 @@ function MyBookings() {
     }
   };
 
+  const submitRating = async (bookingId) => {
+    try {
+      await axios.post("/reviews", { bookingId, rating: ratingValue, comment: ratingComment });
+      alert("Thanks for your review!");
+      setRatingId(null); setRatingValue(5); setRatingComment("");
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to submit review");
+    }
+  };
+
   const input = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
 
   return (
@@ -87,6 +100,10 @@ function MyBookings() {
                     <>
                       <button onClick={() => cancelBooking(b.id)} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">Cancel</button>
                       <button onClick={() => setReportingId(reportingId === b.id ? null : b.id)} className="rounded-lg bg-yellow-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-yellow-600">Report Issue</button>
+                      <button onClick={() => setRatingId(ratingId === b.id ? null : b.id)}
+                        className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700">
+                        Rate
+                      </button>
                     </>
                   )}
                 </div>
@@ -105,6 +122,24 @@ function MyBookings() {
                   <div className="flex gap-2">
                     <button onClick={() => submitReport(b.id)} className="rounded-lg bg-yellow-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-yellow-600">Submit report</button>
                     <button onClick={() => setReportingId(null)} className="rounded-lg bg-gray-200 px-4 py-1.5 text-sm text-gray-700">Cancel</button>
+                  </div>
+                </div>
+              )}
+
+              {ratingId === b.id && (
+                <div className="mt-3 space-y-2 border-t pt-3">
+                  <div className="flex gap-1 text-2xl">
+                    {[1,2,3,4,5].map((s) => (
+                      <button key={s} type="button" onClick={() => setRatingValue(s)}
+                        className={s <= ratingValue ? "text-yellow-500" : "text-gray-300"}>★</button>
+                    ))}
+                  </div>
+                  <textarea value={ratingComment} onChange={(e) => setRatingComment(e.target.value)} rows="2"
+                    placeholder="Leave a comment (optional)"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  <div className="flex gap-2">
+                    <button onClick={() => submitRating(b.id)} className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700">Submit review</button>
+                    <button onClick={() => setRatingId(null)} className="rounded-lg bg-gray-200 px-4 py-1.5 text-sm text-gray-700">Cancel</button>
                   </div>
                 </div>
               )}

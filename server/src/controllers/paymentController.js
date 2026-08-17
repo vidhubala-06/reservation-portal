@@ -5,6 +5,7 @@ import {
   createHeldBooking, confirmBookingPaid, releaseHeldBooking, getBookingForPayment,
 } from "../models/bookingModel.js";
 import { recordPayment, recordOwnerEarning } from "../models/paymentModel.js";
+import { notifyBookingConfirmed } from "../models/notificationModel.js";
 
 // POST /api/payments/order — reserve slots + create a Razorpay order
 export const createOrder = async (req, res) => {
@@ -22,6 +23,8 @@ export const createOrder = async (req, res) => {
       turf_unavailable: "Turf is not available",
       outside_hours: "Selected time is outside operating hours",
       slot_taken: "One or more slots are no longer available",
+      outside_window: "You can only book within the next 7 days",
+      past_slot: "That time has already passed",
     };
     if (result.error) return res.status(409).json({ message: errs[result.error] || "Booking failed" });
 
@@ -81,6 +84,7 @@ export const verifyPayment = async (req, res) => {
       } catch (e) {
         if (e.code !== "ER_DUP_ENTRY") throw e;
       }
+      await notifyBookingConfirmed(bookingId);
     }
 
     res.json({ message: "Payment successful, booking confirmed" });
@@ -154,6 +158,7 @@ export const webhook = async (req, res) => {
         } catch (e) {
           if (e.code !== "ER_DUP_ENTRY") throw e;
         }
+        await notifyBookingConfirmed(booking.id);
       }
     }
 
