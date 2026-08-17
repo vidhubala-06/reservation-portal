@@ -52,6 +52,17 @@ function ManageSlots() {
     }
   };
 
+  const closeDay = async () => {
+    if (!window.confirm(`Cancel and FULLY refund all bookings for ${date}? Use this for rain / closures.`)) return;
+    try {
+      const res = await axios.post(`/owner/turfs/${id}/cancel-day`, { date });
+      alert(res.data.message);
+      loadAvailability();
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to close the day");
+    }
+  };
+
   if (!turf) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -78,8 +89,14 @@ function ManageSlots() {
           Click a free slot to block it for maintenance. Click a blocked slot to unblock. Booked slots can't be changed.
         </p>
 
-        <input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)}
-          className="mb-4 rounded-lg border border-gray-300 px-3 py-2" />
+        <div className="mb-4 flex items-center">
+          <input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2" />
+          <button onClick={closeDay}
+            className="ml-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+            Close day & refund all (rain)
+          </button>
+        </div>
 
         {err && <p className="mb-2 text-sm text-red-600">{err}</p>}
 

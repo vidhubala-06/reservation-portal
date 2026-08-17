@@ -75,7 +75,7 @@ export const getCustomerBookings = async (customerId) => {
      FROM bookings b
      JOIN turfs t ON b.turf_id = t.id
      WHERE b.customer_id = ?
-     ORDER BY b.booking_date DESC, b.start_time DESC`,
+     ORDER BY b.id DESC`,
     [customerId]
   );
   return rows;
@@ -151,4 +151,62 @@ export const getBookingForPayment = async (bookingId, customerId) => {
     [bookingId, customerId]
   );
   return rows[0] || null;
+};
+
+// Booking + its payment details, for cancellation
+export const getBookingForCancel = async (bookingId, customerId) => {
+  const [rows] = await pool.query(
+    `SELECT b.id, b.status, b.payment_status, b.booking_date, b.start_time,
+            p.id AS payment_id, p.gateway_payment_id, p.owner_share, p.total_amount
+     FROM bookings b
+     LEFT JOIN payments p ON p.booking_id = b.id
+     WHERE b.id = ? AND b.customer_id = ?`,
+    [bookingId, customerId]
+  );
+  return rows[0] || null;
+};
+
+// Cancel: mark booking, free slots, log refund, reverse owner earning — atomically
+export const cancelBooking = async (bookingId, {
+  refundAmount, ownerReversal, commissionRefunded, paymentId, reason, refundType, paymentStatus,
+}) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await conn.query("UPDATE bookings SET status='cancelled', payment_status=? WHERE id=?", [paymentStatus, bookingId]);
+    await conn.query("DELETE FROM slot_reservations WHERE booking_id=?", [bookingId]); // free the slots
+
+    if (paymentId && refundAmount > 0) {
+      await conn.query(
+        `INSERT INTO refunds (payment_id, refund_amount, reason, refund_type, commission_refunded_amount, owner_debited, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'succeeded')`,
+        [paymentId, refundAmount, reason, refundType, commissionRefunded, ownerReversal]
+      );
+    }
+
+    if (ownerReversal > 0) {
+      const [[owner]] = await conn.query(
+        `SELECT op.id FROM bookings b
+         JOIN turfs t ON b.turf_id=t.id
+         JOIN owner_profiles op ON t.owner_id=op.id
+         WHERE b.id=?`,
+        [bookingId]
+      );
+      if (owner) {
+        await conn.query(
+          "INSERT INTO owner_balance_transactions (owner_id, payment_id, amount, type, reason) VALUES (?, ?, ?, 'clawback', ?)",
+          [owner.id, paymentId, -ownerReversal, `Refund for booking #${bookingId}`]
+        );
+        await conn.query("UPDATE owner_profiles SET balance = balance - ? WHERE id=?", [ownerReversal, owner.id]);
+      }
+    }
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 };

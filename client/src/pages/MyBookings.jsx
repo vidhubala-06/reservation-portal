@@ -45,6 +45,18 @@ function MyBookings() {
     doc.save(`receipt-${b.id}.pdf`);
   };
 
+  const cancelBooking = async (id) => {
+    if (!window.confirm("Cancel this booking? Your refund depends on how early you cancel (100% >24h, 50% 6–24h, 0% <6h before).")) return;
+    try {
+      const res = await axios.patch(`/bookings/${id}/cancel`);
+      alert(res.data.message);
+      const r = await axios.get("/bookings/my");
+      setBookings(r.data.bookings);
+    } catch (e) {
+      alert(e.response?.data?.message || "Cancel failed");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -68,6 +80,12 @@ function MyBookings() {
                   className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700">
                   Receipt
                 </button>
+                {b.status === "confirmed" && (
+                  <button onClick={() => cancelBooking(b.id)}
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           ))}

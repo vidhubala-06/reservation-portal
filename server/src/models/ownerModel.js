@@ -122,3 +122,17 @@ export const getOwnerEarnings = async (userId) => {
   );
   return { balance: profile.balance, transactions };
 };
+
+// Confirmed bookings for a turf on a date (with payment details), for a rain closure
+export const cancelDayBookings = async (turfId, userId, date) => {
+  if (!(await ownsTurf(turfId, userId))) return { error: "not_found" };
+  const [bookings] = await pool.query(
+    `SELECT b.id, p.id AS payment_id, p.gateway_payment_id,
+            p.total_amount, p.owner_share, p.commission
+     FROM bookings b
+     LEFT JOIN payments p ON p.booking_id = b.id
+     WHERE b.turf_id = ? AND b.booking_date = ? AND b.status = 'confirmed'`,
+    [turfId, date]
+  );
+  return { bookings };
+};

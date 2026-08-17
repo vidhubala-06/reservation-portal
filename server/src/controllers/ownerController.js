@@ -1,4 +1,6 @@
-import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot, getOwnerEarnings } from "../models/ownerModel.js";
+import razorpay from "../config/razorpay.js";
+import { cancelBooking as cancelBookingModel } from "../models/bookingModel.js";
+import { getOwnerTurfs, getOwnerTurfById, updateOwnerTurf, blockSlot, unblockSlot, getOwnerEarnings, cancelDayBookings } from "../models/ownerModel.js";
 import { getOwnerBookings } from "../models/ownerModel.js";
 
 export const listMyTurfs = async (req, res) => {
@@ -74,6 +76,41 @@ export const listOwnerBookings = async (req, res) => {
 export const earnings = async (req, res) => {
   try {
     res.json(await getOwnerEarnings(req.user.id));
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// POST /api/owner/turfs/:id/cancel-day  — rain/closure: refund all bookings that day
+export const cancelDay = async (req, res) => {
+  try {
+    const turfId = req.params.id;
+    const { date } = req.body;
+    if (!date) return res.status(400).json({ message: "date is required" });
+
+    const result = await cancelDayBookings(turfId, req.user.id, date);
+    if (result.error === "not_found") return res.status(404).json({ message: "Turf not found" });
+
+    let count = 0;
+    for (const b of result.bookings) {
+      // full refund to the customer
+      if (b.gateway_payment_id && b.total_amount > 0) {
+        await razorpay.payments.refund(b.gateway_payment_id, { amount: b.total_amount });
+      }
+      // full refund: owner share reversed, commission also refunded, no penalty
+      await cancelBookingModel(b.id, {
+        refundAmount: b.total_amount || 0,
+        ownerReversal: b.owner_share || 0,
+        commissionRefunded: b.commission || 0,
+        paymentId: b.payment_id,
+        reason: "rain",
+        refundType: "full",
+        paymentStatus: "refunded",
+      });
+      count++;
+    }
+
+    res.json({ message: `Day closed. ${count} booking(s) cancelled and fully refunded.` });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
